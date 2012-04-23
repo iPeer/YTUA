@@ -16,7 +16,7 @@ public class VideoInfo {
 
 	public VideoInfo() { }
 
-	public static void getVideoInfo(Engine engine, String channel, String ID) throws SAXException, IOException, ParserConfigurationException {
+	public static void getVideoInfo(Engine engine, int outType, String channel, String ID) throws SAXException, IOException, ParserConfigurationException {
 		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 		String URL = "http://gdata.youtube.com/feeds/api/videos/"+ID;
 		DocumentBuilder a = f.newDocumentBuilder();
@@ -60,7 +60,10 @@ public class VideoInfo {
 			if (description.equals(""))
 				engine.msg(channel, out);
 			else
-				engine.msgArray(channel, outArray);
+				if (outType == 1)
+					engine.msgArray(channel, outArray);
+				else
+					engine.noticeArray(channel, outArray);
 
 		else
 			System.out.println(out);
@@ -68,7 +71,7 @@ public class VideoInfo {
 
 	public static void main(String[] args) {
 		try {
-			getVideoInfo(Engine.engine, "#Peer.dev", "J88J4B9rstY");
+			getVideoInfo(Engine.engine, 0, "#Peer.dev", "J88J4B9rstY");
 		} catch (SAXException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

@@ -165,7 +165,8 @@ public class VideoChecker implements Runnable {
 					minutes -= 60;
 				}
 				String newDuration = (hours > 0 ? (hours < 10 ? "0"+hours : hours)+":" : "")+(minutes < 10 ? "0"+minutes : minutes)+":"+(seconds < 10 ? "0"+seconds : seconds);
-				String o = Engine.colour+"13"+user+Engine.colour+"14 uploaded a video: "+Engine.colour+"13"+title+Engine.colour+"14 ["+Engine.colour+"13"+newDuration+Engine.colour+"14] - "+Engine.colour+"13http://youtu.be/"+videoID;
+				char dash = 6;
+				String o = Engine.colour+"13"+user+Engine.colour+"14 uploaded a video: "+Engine.colour+"13"+title+Engine.colour+"14 ["+Engine.colour+"13"+newDuration+Engine.colour+"14] "+dash+" "+Engine.colour+"13http://youtu.be/"+videoID;
 				if (!videoIDCache.containsKey(user))
 					videoIDCache.put(user, "Pending");
 				System.out.println(videoIDCache.get(user)+" vs "+videoID+" - IDs Differ? "+!videoIDCache.get(user).equals(videoID));

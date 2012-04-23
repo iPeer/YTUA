@@ -35,7 +35,7 @@ public class Engine implements Runnable {
 	public String MY_NICK;
 
 	public static Engine engine;
-	
+
 	protected Utils utils;
 
 	public static final char colour = 03;
@@ -130,7 +130,7 @@ public class Engine implements Runnable {
 					out.flush();
 				}
 			}
-			
+
 			join("#QuestHelp");
 			join("#Peer.dev");
 			// Read from the server while the connection is active
@@ -246,7 +246,7 @@ public class Engine implements Runnable {
 			User b = new User(a[4], a[5], a[6], a[7], a[8], realName);
 			channels.get(channel).getUserList().put(a[7], b);
 		}
-		
+
 		else if (line.split(" ")[1].equals("315")) {
 			if (!videoChecker.isRunning) {
 				videoChecker.isRunning = true;
@@ -257,10 +257,12 @@ public class Engine implements Runnable {
 		}
 		else if (line.contains("PRIVMSG")) {
 			String[] args = makePRIVMSGBotFriendly(line);
+			String noticeChars = ".!";
 			String channel = args[1];
 			String nick = args[0];
 			String message = args[2];
 			Channel channelObject = channels.get(channel.toLowerCase());
+			Channel adminChannelObject = channels.get("#peer.dev");
 			System.out.println(nick+": "+message);
 			if (message.startsWith("")) {			
 				String CTCPType = message.replaceAll("", "");
@@ -272,103 +274,136 @@ public class Engine implements Runnable {
 				else if (CTCPType.equals("TIME"))
 					notice(nick,"TIME "+new SimpleDateFormat().format(System.currentTimeMillis()));
 			}
-
-			if (message.equals(".quit") && utils.isAdmin(channelObject, nick)) {
-				quit("Quit from "+nick);
-			}
-
-			//			if (message.startsWith(".connectTo") && utils.isAdmin(channelObject, nick)) {
-			//				String[] args1 = message.split(" ");
-			//				String server = args1[1];
-			//				int port = Integer.parseInt(args1[2]);
-			//				String nick1 = args1[3];
-			//				System.out.println(server+":"+port+" "+nick1);
-			//				Engine e2 = new Engine(server, port, nick1);
-			//				e2.start();
-			//			}
-
-
-			if (message.startsWith(".adduser") && utils.isAdmin(channelObject, nick)) {
-				String user = line.split(".adduser ")[1];
-				videoChecker.addUser(user, channel);
-			}
-
-			if (message.startsWith(".deluser") && utils.isAdmin(channelObject, nick)) {
-				String user = line.split(".deluser ")[1];
-				videoChecker.removeUser(user, channel);
-			}
-
-			if (message.equals(".listusernames") && utils.isAdmin(channelObject, nick)) {
-				msg(channel, videoChecker.getUsernames().toString());
-			}
-
-			if (message.equals(".listnetworks") && utils.isAdmin(channelObject, nick)) {
-				msg(channel, networks.toString());
-			}
-			
-			if (message.equals(".listusers") && utils.isAdmin(channelObject, nick))
-				msg(channel, channels.get(channel.toLowerCase()).getUserList().toString());
-
-			if (message.startsWith(".rank")) {
-				try {
-					String newUser = "";
+			if (config.getProperty("commandChars").contains(message.substring(0, 1))) {
+				String command = message.substring(1);
+				String commandPrefix = message.substring(0, 1);
+				
+				if (command.startsWith("quit") && utils.isAdmin(adminChannelObject, nick)) {
 					try {
-						newUser = message.split(".rank ")[1];
+						String message2 = line.split(".quit ")[1];
+						quit("Quit from "+nick+" ("+message2+")");
 					}
-					catch (Exception e) {
-						newUser = nick;
+					catch (ArrayIndexOutOfBoundsException e) {
+						quit("Quit from "+nick);
 					}
-					String newChannel = channel.toLowerCase();
-					User u = channels.get(newChannel).getUserList().get(newUser);
-					msg(channel, "@:"+u.isOp()+", %:"+u.isHop()+", +:"+u.isVoice()+", R:"+u.isReg());
 				}
-				catch (NullPointerException e) {
-					msg(channel, "NullPointer all up in yo face!");
-				}
-			}
-			
-			if (message.equals(".amIadmin"))
-				msg(channel, utils.isAdmin(channelObject, nick));
-			if (message.startsWith(".hasIAL") && utils.isAdmin(channelObject, nick)) {
-				String channel2 = "";
-				try {
-					channel2 = message.split(".hasIAL ")[1];
-				}
-				catch (ArrayIndexOutOfBoundsException a) {
-					msg(channel, "You must specify a channel!");
-				}
-				boolean Empty;
-				try {
-					Empty = !channels.get(channel2.toLowerCase()).getUserList().isEmpty();
-				}
-				catch (NullPointerException e) {
-					Empty = false;
-				}
-				msg(channel, Empty);
-			}
 
-			if (message.equals(".updateIAL") && utils.isAdmin(channelObject, nick)) {
-				channels.get(channel.toLowerCase()).getUserList().clear();
-				who(channel);
-			}
+				//			if (message.startsWith(".connectTo") && utils.isAdmin(adminChannelObject, nick)) {
+				//				String[] args1 = message.split(" ");
+				//				String server = args1[1];
+				//				int port = Integer.parseInt(args1[2]);
+				//				String nick1 = args1[3];
+				//				System.out.println(server+":"+port+" "+nick1);
+				//				Engine e2 = new Engine(server, port, nick1);
+				//				e2.start();
+				//			}
 
-			if (message.equals(".part") && utils.isAdmin(channelObject, nick)) {
-				part(channel);
-			}
 
-			if (message.equals(".info")) {
-				long totalMemory = Runtime.getRuntime().totalMemory();
-				long freeMemory = Runtime.getRuntime().freeMemory();
-				long usedMemory = totalMemory - freeMemory;
-				String memory = (usedMemory / 1024L / 1024L)+"MB/"+(totalMemory / 1024L / 1024L)+"MB";
-				System.out.println(memory);
-				msg(channel, "Memory Usage: "+memory+" | "+channels.size()+" channels | "+videoChecker.getUsernames().size()+" watched users.");
-			}
-			if (message.startsWith(".lastvideo")) {
-				GetLatestVideo.lookupLatestVideo(this, channel, message.split(".lastvideo ")[1].split(" ")[0]);
-			}
+				if (command.startsWith("adduser") && utils.isAdmin(adminChannelObject, nick)) {
+					String user = line.split(".adduser ")[1];
+					videoChecker.addUser(user, channel);
+				}
 
-			if (message.replaceAll("https://", "http://").contains("http://www.youtube.com/") && !nick.equals("jYouTube")) {
+				if (command.startsWith("deluser") && utils.isAdmin(adminChannelObject, nick)) {
+					String user = line.split(".deluser ")[1];
+					videoChecker.removeUser(user, channel);
+				}
+
+				if (command.equals("listusernames") && utils.isAdmin(adminChannelObject, nick)) {
+					if (noticeChars.contains(commandPrefix))
+						notice(nick, videoChecker.getUsernames().toString());
+					else
+						msg(channel, videoChecker.getUsernames().toString());
+				}
+
+				if (command.equals("listnetworks") && utils.isAdmin(adminChannelObject, nick)) {
+					if (noticeChars.contains(commandPrefix))
+						notice(nick, networks.toString());
+					else
+						msg(channel, networks.toString());
+				}
+
+				if (command.equals("listusers") && utils.isAdmin(adminChannelObject, nick))
+					if (!noticeChars.contains(commandPrefix))
+						msg(channel, channels.get(channel.toLowerCase()).getUserList().toString());
+					else
+						notice(nick, channels.get(channel.toLowerCase()).getUserList().toString());
+
+				if (command.startsWith("rank")) {
+					try {
+						String newUser = "";
+						try {
+							newUser = message.split(".rank ")[1];
+						}
+						catch (Exception e) {
+							newUser = nick;
+						}
+						String newChannel = channel.toLowerCase();
+						User u = channels.get(newChannel).getUserList().get(newUser);
+						msg(channel, "@:"+u.isOp()+", %:"+u.isHop()+", +:"+u.isVoice()+", R:"+u.isReg());
+					}
+					catch (NullPointerException e) {
+						msg(channel, "NullPointer all up in yo face!");
+					}
+				}
+
+				if (command.equals("amIadmin"))
+					msg(channel, utils.isAdmin(adminChannelObject, nick));
+				
+				if (command.startsWith("hasIAL") && utils.isAdmin(adminChannelObject, nick)) {
+					String channel2 = "";
+					try {
+						channel2 = message.split(".hasIAL ")[1];
+					}
+					catch (ArrayIndexOutOfBoundsException a) {
+						msg(channel, "You must specify a channel!");
+					}
+					boolean Empty;
+					try {
+						Empty = !channels.get(channel2.toLowerCase()).getUserList().isEmpty();
+					}
+					catch (NullPointerException e) {
+						Empty = false;
+					}
+					msg(channel, Empty);
+				}
+
+				if (command.equals("updateIAL") && utils.isAdmin(adminChannelObject, nick)) {
+					channels.get(channel.toLowerCase()).getUserList().clear();
+					who(channel);
+				}
+
+				if ((command.equals("forceuserupdate") || command.equals("forceupdate") ) && utils.isAdmin(adminChannelObject, nick)) {
+					msg(channel, "Forcing update, please stand by...");
+					videoChecker.updateUserNames();
+					msg(channel, "Finished forcing update on "+videoChecker.getUsernames().size()+" users!");
+				}
+
+				if (command.equals("part") && utils.isAdmin(adminChannelObject, nick)) {
+					part(channel);
+				}
+
+				if (command.equals("info")) {
+					long totalMemory = Runtime.getRuntime().totalMemory();
+					long freeMemory = Runtime.getRuntime().freeMemory();
+					long usedMemory = totalMemory - freeMemory;
+					String memory = (usedMemory / 1024L / 1024L)+"MB/"+(totalMemory / 1024L / 1024L)+"MB";
+					System.out.println(memory);
+					String out =  "Memory Usage: "+memory+" | "+channels.size()+" channels | "+videoChecker.getUsernames().size()+" watched users.";
+					if (noticeChars.contains(commandPrefix))
+						notice(nick, out);
+					else
+						msg(channel, out);
+				}
+				if (command.startsWith("lastvideo")) {
+					int outType = message.startsWith("@") ? 1 : 0;
+					GetLatestVideo.lookupLatestVideo(this, outType, outType == 1 ? channel : nick, message.split(".lastvideo ")[1].split(" ")[0]);
+				}
+			}
+			else if (message.equals("+voice"))
+				send("MODE "+channel+" +v "+nick);
+
+			else if (message.replaceAll("https://", "http://").contains("http://www.youtube.com/") && line.indexOf("video_response_view_all") < 0 && !nick.equals("jYouTube")) {
 				message = message.replaceAll("https://", "http://");
 				String videoID = null;
 				int indexOf = message.indexOf("http://www.youtube.com/watch?");
@@ -381,19 +416,19 @@ public class Engine implements Runnable {
 				}
 				if (videoID != null)
 					try {
-						VideoInfo.getVideoInfo(this, channel, videoID);
+						VideoInfo.getVideoInfo(this, 1, channel, videoID);
 					} catch (Exception e) {
 						msg(channel, "Error getting video info: "+e.toString());
 						e.printStackTrace();
 					} 
 			}
 
-			if (message.replaceAll("https://", "http://").contains("http://youtu.be/") && !nick.equals("jYouTube")) {
+			else if (message.replaceAll("https://", "http://").contains("http://youtu.be/") && !nick.equals("jYouTube")) {
 				message = message.replaceAll("https://", "http://");
 				String a = message.split("http://youtu.be/")[1].split("&")[0].split(" ")[0];
 				System.out.println(a);
 				try {
-					VideoInfo.getVideoInfo(this, channel, a);
+					VideoInfo.getVideoInfo(this, 1, channel, a);
 				} catch (Exception e) {
 					msg(channel, "Error getting video info: "+e.toString());
 					e.printStackTrace();
@@ -514,9 +549,16 @@ public class Engine implements Runnable {
 		out.write("WHO "+s+"\r\n");
 		out.flush();
 	}
-	
+
 	public void send(String s) throws IOException {
 		out.write(s+"\r\n");
+		out.flush();
+	}
+
+	public void noticeArray(String user, String[] outArray) throws IOException {
+		for (int x = 0; x < outArray.length; x++) {
+			out.write("NOTICE "+user+" :"+outArray[x]+"\r\n");
+		}
 		out.flush();
 	}
 

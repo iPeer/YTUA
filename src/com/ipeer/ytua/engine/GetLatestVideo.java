@@ -19,10 +19,10 @@ public class GetLatestVideo {
 
 
 	public static void main(String[] args) {
-		lookupLatestVideo(Engine.engine, "#peer.dev", "EthosLab");
+		lookupLatestVideo(Engine.engine, 0, "#peer.dev", "EthosLab");
 	}
 
-	public static void lookupLatestVideo(Engine engine, String channel, String user) {
+	public static void lookupLatestVideo(Engine engine, int outType, String channel, String user) {
 		try {
 			DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 			DocumentBuilder a = f.newDocumentBuilder();
@@ -33,7 +33,7 @@ public class GetLatestVideo {
 			NamedNodeMap n2 = n.item(0).getAttributes();
 			String data = n2.item(5).getNodeValue();
 			String postoutput = data.split("/")[4];
-			VideoInfo.getVideoInfo(engine, channel, postoutput.substring(0, postoutput.indexOf("?")));
+			VideoInfo.getVideoInfo(engine, outType, channel, postoutput.substring(0, postoutput.indexOf("?")));
 		}
 		catch (Exception e) {
 			engine.msg(channel, "SEVERE: "+e.toString()+" @ "+e.getStackTrace()[0]);
